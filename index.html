@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1a1a1a">
+<title>BURKAB — Ultrasonik Kaynak Proses Kontrolü</title>
+<style>
+:root{--bg:#141414;--card:#1f1f1f;--line:#333;--tx:#eee;--mu:#9a9a9a;--ok:#2ea44f;--nok:#e5484d;--wr:#f0a30a;--ac:#f5c518}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,Arial,sans-serif;padding-bottom:90px}
+header{background:#1a1a1a;border-bottom:3px solid var(--ac);padding:12px 14px}
+header b{color:var(--ac);letter-spacing:1px}header small{display:block;color:var(--mu)}
+main{max-width:900px;margin:auto;padding:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0}
+h2{margin:0 0 10px;font-size:14px;color:var(--ac);letter-spacing:.5px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{font-size:12px;color:var(--mu);display:block;margin-bottom:3px}
+input,select,textarea{width:100%;padding:10px;background:#111;color:var(--tx);border:1px solid var(--line);border-radius:7px;font:inherit}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ac)}
+.vr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.vr:last-child{border:0}.bt{display:flex;gap:6px}
+.bt button{min-width:64px;padding:10px;border:1px solid var(--line);background:#111;color:var(--tx);border-radius:7px;font-weight:700}
+.bt .on.ok{background:var(--ok);border-color:var(--ok)}.bt .on.nok{background:var(--nok);border-color:var(--nok)}
+.res{font-size:12px;margin-top:4px;font-weight:700}
+.OK{color:var(--ok)}.NOK{color:var(--nok)}.IKAZ{color:var(--wr)}
+.chips span{display:inline-block;background:#111;border:1px solid var(--line);border-radius:14px;padding:2px 10px;margin:3px 3px 0 0}
+.chips span.lo{border-color:var(--nok);color:var(--nok)}
+#bar{position:fixed;left:0;right:0;bottom:0;background:#1a1a1a;border-top:3px solid var(--mu);padding:10px;display:flex;gap:8px;align-items:center;justify-content:center}
+#bar.OK{border-color:var(--ok)}#bar.NOK{border-color:var(--nok)}#bar.IKAZ{border-color:var(--wr)}
+#genel{font-weight:800;font-size:16px;min-width:110px;text-align:center}
+.btn{padding:12px 18px;border:0;border-radius:8px;font-weight:800;background:var(--ac);color:#000}
+.btn.s{background:#333;color:var(--tx)}
+#aş{display:none;background:#3a1517;border:1px solid var(--nok);border-radius:8px;padding:10px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px;border-bottom:1px solid var(--line);text-align:left}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--wr)}.dot.s{background:var(--ok)}
+#rapor{display:none}
+@page{size:A4 portrait;margin:0}
+@media print{
+ html,body{background:#fff}body{padding:0;margin:0}
+ header,main,#bar{display:none!important}
+ #rapor{display:block;padding:8mm 12mm 6mm;font:12.5px/1.3 Arial,Helvetica,sans-serif;color:#000}
+ #rapor table{width:100%;border-collapse:collapse;margin:0 0 8px;break-inside:avoid}
+ #rapor th,#rapor td{border:1px solid #444;padding:5px 8px;text-align:left;vertical-align:middle}
+ #rapor th{background:#e6e6e6;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px}
+ #rapor td.l{background:#f3f3f3;font-weight:700;width:19%;font-size:11.5px}
+ #rapor .c{text-align:center}
+ #rapor h3{margin:0 0 4px;font-size:12px;letter-spacing:.6px;border-left:5px solid #f5c518;padding-left:7px}
+ #rapor .ok{color:#1a7f37;font-weight:800}#rapor .nk{color:#c62828;font-weight:800}#rapor .ik{color:#b26a00;font-weight:800}
+ #rapor .sonuc{border:3px solid;font-size:18px;font-weight:800;text-align:center;padding:8px;margin:0 0 8px;letter-spacing:1px}
+ #rapor .box{border:1px solid #444;padding:7px 9px;min-height:44px;margin:0 0 8px;white-space:pre-wrap}
+ #rapor .imza td{height:58px;vertical-align:bottom;font-size:10.5px;color:#444;width:33.3%}
+ #rapor .ft{margin-top:4px;font-size:9.5px;color:#666;text-align:center}
+}
+</style></head><body>
+<header><b>BURKAB A.Ş</b> — ULTRASONİK KAYNAK PROSES KONTROLÜ<small>Form No: <span id="fno"></span> · Çekme-kopma testi dahil</small></header>
+<main>
+<div class="card"><h2>GENEL BİLGİLER</h2><div class="g">
+<div><label>Personel No *</label><input id="personel"></div>
+<div><label>Makine No *</label><input id="makine" placeholder="UK-01"></div>
+<div><label>İş Emri No *</label><input id="isEmri"></div>
+<div><label>Kısım / Parça</label><input id="parca"></div>
+<div><label>Makine Tipi</label><select id="tip"><option>Otomatik</option><option>Manuel</option></select></div>
+<div><label>Sonotrod / Örs No</label><input id="sonotrod"></div>
+<div><label>Kaynak Prog. No</label><input id="prog"></div>
+<div><label>Toplam Kaynak Kesiti (mm²)</label><input id="kesit" type="number" step="0.01" inputmode="decimal"></div>
+<div><label>Kontrol Kriteri *</label><select id="kriter"><option value="">— Seçiniz —</option>
+<option value="B">B — Başlangıç</option><option value="S">S — Son</option><option value="DK">DK — Sonotrod/Örs değişimi</option>
+<option value="KaD">KaD — Kablo değişimi</option><option value="KD">KD — Kablo rulo değişimi</option><option value="PD">PD — Parça değişimi</option>
+<option value="PK">PK — Proses kontrol</option><option value="F">F — Frekansiyel</option><option value="A">A — Arıza sonrası</option></select></div>
+<div><label>Çekme Cihazı Kodu</label><input id="cihaz"></div>
+<div><label>Tarih</label><input id="tarih" type="date"></div>
+<div><label>Saat</label><input id="saat" type="time"></div>
+</div></div>
+
+<div class="card"><h2>GÖRSEL KONTROL</h2><div id="vis"></div></div>
+
+<div class="card"><h2>ÖLÇÜSEL KONTROL</h2><div class="g" id="num"></div></div>
+
+<div class="card"><h2>ÇEKME (KOPMA) KUVVETİ TESTİ</h2><div class="g">
+<div><label>Numune değerleri (N) — boşlukla ayırın, ondalık için virgül/nokta *</label><input id="cekme" inputmode="decimal" placeholder="92 95 97"></div>
+<div><label>Min. kabul değeri (N) — şartname / iş emri</label><input id="cekMin" type="number" step="0.1" inputmode="decimal"></div>
+<div><label>Kopma yeri</label><select id="kopma"><option value="">—</option><option>Telde koptu (kaynak dışı)</option><option>Kaynak bölgesinde ayrıldı</option></select></div>
+</div><div class="chips" id="chips"></div><div class="res" id="cekRes"></div></div>
+
+<div class="card"><h2>AÇIKLAMA</h2><textarea id="acik" rows="3" maxlength="300" placeholder="NOK ise neyin NOK olduğunu ve yapılan işlemi yazın"></textarea>
+<div id="aş"><b>⚠ UYGUNSUZLUK</b> — Makineyi durdurun, son uygun kontrolden sonraki ürünleri ayırın, <b>AŞ-15 Uygun Olmayan Ürün Akış Şemasını</b> uygulayın. Müdahale sonrası yeni kayıt açıp kriter olarak A / PD / DK seçin.</div></div>
+
+<div class="card np"><h2>SON KAYITLAR <button class="btn s" style="float:right;padding:4px 10px" onclick="syncAll()">⟳ Senkronize Et</button></h2>
+<table><thead><tr><th></th><th>Form No</th><th>İş Emri</th><th>Kriter</th><th>Sonuç</th></tr></thead><tbody id="list"></tbody></table></div>
+</main>
+<div id="bar"><span id="genel">—</span><button class="btn" onclick="save()">💾 KAYDET</button><button class="btn s" onclick="rapor();window.print()">🖨</button><button class="btn s" onclick="yeni()">Yeni</button></div>
+
+<div id="rapor"></div>
+<script>
+/* ===== AYAR ===== */
+const GAS_URL = '';           // ← Google Apps Script web app URL'nizi yazın (boşsa yalnızca bu cihazda saklanır)
+const LS = 'us_kayit_v1';
+const $ = id => document.getElementById(id);
+const VIS = [['v1','Kablo tipi ve kesiti doğru mu?'],['v2','Kaynak programı doğru mu?'],['v3','Kablo rengi doğru mu?'],
+  ['v4','Sonotrod / Örs durumu (aşınma, kirlilik) uygun mu?'],['v5','Kaynak bölgesinde hasar yok mu? (tel kopması, yanık, yalıtım)']];
+const NUM = [ // id, etiket, hedef alanı var mı, tolerans
+  ['kb','Kablo Boyu (mm)',1,15],['sy','Sıyırma Boyu (mm)',1,1],['kh','Kaynak Yüksekliği (mm)',1,0],
+  ['kg','Kaynak Genişliği (mm)',0],['en','Kaynak Enerjisi (Ws)',0],['ba','Kaynak Basıncı (bar)',0],['gl','Genlik (%)',0]];
+const vs = {};
+
+/* ===== ARAYÜZ ===== */
+$('vis').innerHTML = VIS.map(([k,t]) => `<div class="vr"><span>${t}</span><span class="bt" id="${k}">
+ <button class="ok" onclick="setV('${k}','OK')">ü OK</button><button class="nok" onclick="setV('${k}','NOK')">X NOK</button></span></div>`).join('');
+$('num').innerHTML = NUM.map(([k,t,h]) => `<div><label>${t}</label><div style="display:flex;gap:6px">
+ ${h ? `<input id="${k}H" type="number" step="0.01" inputmode="decimal" placeholder="hedef" oninput="calc()">` : ''}
+ <input id="${k}O" type="number" step="0.01" inputmode="decimal" placeholder="${h ? 'ölçüm' : 'ölçülen'}" oninput="calc()"></div><div class="res" id="${k}R"></div></div>`).join('');
+function setV(k, v) { vs[k] = v; [...$(k).children].forEach(b => b.classList.toggle('on', b.className.split(' ')[0] === v.toLowerCase())); calc(); }
+
+/* ===== HESAPLAMA ===== */
+const n = id => { const v = parseFloat($(id).value); return isNaN(v) ? null : v; };
+const samples = () => $('cekme').value.split(/[\s;]+/).map(s => parseFloat(s.replace(',', '.'))).filter(x => !isNaN(x));
+const dur = (k, d, tol) => k === 'kh' ? (Math.abs(d) <= 0.04 + 1e-9 ? 'OK' : Math.abs(d) < 0.06 - 1e-9 ? 'IKAZ' : 'NOK') : (Math.abs(d) <= tol ? 'OK' : 'NOK');
+function calc() {
+  const sonuc = [];
+  VIS.forEach(([k,t]) => sonuc.push(vs[k] === 'NOK' ? 'NOK' : 'OK'));
+  NUM.forEach(([k,t,h,tol]) => {
+    const H = h ? n(k + 'H') : null, O = n(k + 'O'), el = $(k + 'R'); el.textContent = ''; el.className = 'res';
+    if (H === null || O === null || !h) return;
+    const d = +(O - H).toFixed(3), s = dur(k, d, tol);
+    el.textContent = `Sapma ${d > 0 ? '+' : ''}${d} → ${s === 'IKAZ' ? 'İKAZ' : s}`; el.classList.add(s); sonuc.push(s);
+  });
+  const c = samples(), mn = n('cekMin'), lo = c.length ? Math.min(...c) : null, hi = c.length ? Math.max(...c) : null;
+  $('chips').innerHTML = c.map(x => `<span class="${mn !== null && x < mn ? 'lo' : ''}">${x} N</span>`).join('');
+  let cs = '';
+  if (c.length) {
+    cs = mn === null ? '' : lo >= mn ? 'OK' : 'NOK'; if (cs) sonuc.push(cs);
+    $('cekRes').className = 'res ' + cs;
+    $('cekRes').textContent = `Min ${lo} N · Max ${hi} N` + (mn === null ? ' (min. kabul değeri girilmedi)' : lo >= mn ? ' → OK' : ' → NOK (min. altında)');
+  } else $('cekRes').textContent = '';
+  const genel = sonuc.includes('NOK') ? 'NOK' : sonuc.includes('IKAZ') ? 'IKAZ' : (Object.keys(vs).length === VIS.length && c.length ? 'OK' : '');
+  $('genel').textContent = genel === 'IKAZ' ? 'İKAZ' : genel || '—'; $('genel').className = genel; $('bar').className = genel;
+  $('aş').style.display = genel === 'NOK' ? 'block' : 'none';
+  return { genel, lo, hi, c };
+}
+$('cekme').oninput = $('cekMin').oninput = calc;
+
+/* ===== FORM NO / KAYIT ===== */
+const all = () => JSON.parse(localStorage.getItem(LS) || '[]');
+const put = a => localStorage.setItem(LS, JSON.stringify(a));
+function fno() {
+  const d = ($('tarih').value || '').replace(/-/g, ''), m = ($('makine').value || 'XX').toUpperCase().replace(/\s/g, '');
+  const sira = String(all().filter(r => r.tarihKey === d).length + 1).padStart(3, '0');
+  $('fno').textContent = `US-${m}-${d}-${sira}`;
+}
+['tarih', 'makine'].forEach(i => $(i).addEventListener('input', fno));
+['tarih', 'saat'].forEach(i => $(i).addEventListener('input', () => saatEl = true));
+let saatEl = false;
+function simdi() {
+  saatEl = false;
+  const t = new Date(), p = x => String(x).padStart(2, '0');
+  $('tarih').value = `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`; $('saat').value = `${p(t.getHours())}:${p(t.getMinutes())}`;
+}
+function save() {
+  if (!saatEl) { simdi(); fno(); } // saat/tarih elle değiştirilmediyse kayıt anını yaz
+  const r = calc(), need = ['personel', 'makine', 'isEmri', 'kriter', 'tarih', 'saat', 'cekMin'].filter(i => !$(i).value.trim());
+  if (need.length) return alert('Zorunlu alanlar eksik: ' + need.join(', '));
+  const bos = [['kb','Kablo boyu'],['sy','Sıyırma boyu'],['kh','Kaynak yüksekliği']].filter(([k]) => n(k + 'H') === null || n(k + 'O') === null).map(x => x[1]);
+  if (bos.length && !confirm('Hedef/ölçülen değer eksik: ' + bos.join(', ') + '. Yine de kaydedilsin mi?')) return;
+  if (Object.keys(vs).length < VIS.length) return alert('Tüm görsel kontrol satırlarını OK / NOK işaretleyin.');
+  if (!r.c.length) return alert('En az bir çekme değeri girin.');
+  if (r.genel === 'NOK' && !$('acik').value.trim()) return alert('NOK kayıtta açıklama zorunludur.');
+  const [y, mo, d] = $('tarih').value.split('-'), rec = { uid: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), formNo: $('fno').textContent, tarihKey: y + mo + d,
+    tarih: `${d}.${mo}.${y}`, saat: $('saat').value };
+  ['personel','makine','isEmri','parca','tip','sonotrod','prog','kesit','kriter','cihaz','cekMin','kopma','acik'].forEach(i => rec[i] = $(i).value.trim());
+  VIS.forEach(([k]) => rec[k] = vs[k]);
+  NUM.forEach(([k,,h]) => { if (h) rec[k + 'H'] = $(k + 'H').value; rec[k + 'O'] = $(k + 'O').value; });
+  Object.assign(rec, { cekmeDegerleri: r.c.join(';'), cekMinOlc: r.lo, cekMaxOlc: r.hi, sonuc: r.genel, sync: 0 });
+  const a = all(); a.unshift(rec); put(a); send(rec).then(() => { liste(); }); liste(); yeni(true);
+}
+function jsonp(p) {
+  return new Promise((res, rej) => {
+    if (!GAS_URL) return rej('GAS_URL yok');
+    const cb = 'cb' + Date.now() + Math.floor(Math.random() * 1e4), s = document.createElement('script');
+    const t = setTimeout(() => { cl(); rej('zaman aşımı'); }, 15000);
+    const cl = () => { clearTimeout(t); delete window[cb]; s.remove(); };
+    window[cb] = d => { cl(); res(d); }; s.onerror = () => { cl(); rej('ağ hatası'); };
+    s.src = GAS_URL + '?' + new URLSearchParams({ ...p, callback: cb }); document.head.appendChild(s);
+  });
+}
+function send(rec) {
+  return jsonp({ action: 'saveUltrasonik', veri: JSON.stringify(rec) }).then(d => {
+    if (d && d.ok) { const a = all(), i = a.findIndex(x => x.formNo === rec.formNo); if (i > -1) { a[i].sync = 1; put(a); } }
+  }).catch(() => {});
+}
+async function syncAll() { for (const r of all().filter(x => !x.sync)) await send(r); liste(); }
+function liste() {
+  $('list').innerHTML = all().slice(0, 20).map(r => `<tr><td><span class="dot ${r.sync ? 's' : ''}" title="${r.sync ? 'Sunucuya gönderildi' : 'Bekliyor'}"></span></td>
+  <td>${r.formNo}</td><td>${r.isEmri}</td><td>${r.kriter}</td><td class="${r.sonuc}">${r.sonuc === 'IKAZ' ? 'İKAZ' : r.sonuc}</td></tr>`).join('') || '<tr><td colspan="5" style="color:var(--mu)">Henüz kayıt yok</td></tr>';
+}
+function yeni(keep) { // kalıcı alanlar (personel, makine, iş emri, program…) korunur; ölçümler temizlenir
+  ['cekme', 'kopma', 'acik', 'kriter'].forEach(i => $(i).value = ''); NUM.forEach(([k,,h]) => { $(k + 'O').value = ''; if (!keep && h) $(k + 'H').value = ''; });
+  Object.keys(vs).forEach(k => { delete vs[k]; [...$(k).children].forEach(b => b.classList.remove('on')); });
+  if (!keep) ['personel', 'makine', 'isEmri', 'parca', 'sonotrod', 'prog', 'kesit', 'kriter', 'cihaz', 'cekMin'].forEach(i => $(i).value = '');
+  simdi(); fno(); calc(); scrollTo(0, 0);
+}
+/* ===== YAZDIRMA RAPORU (A4, tek sayfa) ===== */
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const cls = s => s === 'OK' ? 'ok' : s === 'NOK' ? 'nk' : s ? 'ik' : '';
+const lbl = s => s === 'OK' ? '✓ OK' : s === 'NOK' ? '✗ NOK' : s === 'IKAZ' ? '⚠ İKAZ' : '—';
+const fm = x => String(x).replace('.', ',');
+function rapor() {
+  const r = calc(), v = id => esc($(id).value.trim() || '—'), mn = n('cekMin');
+  const [y, mo, d] = ($('tarih').value || '--').split('-'), kr = $('kriter').selectedOptions[0].text;
+  const inf = [['Personel No', v('personel'), 'Makine No', v('makine')], ['İş Emri No', v('isEmri'), 'Kısım / Parça', v('parca')],
+    ['Makine Tipi', v('tip'), 'Kontrol Kriteri', esc(kr.startsWith('—') ? '—' : kr)], ['Sonotrod / Örs No', v('sonotrod'), 'Kaynak Prog. No', v('prog')],
+    ['Toplam Kaynak Kesiti (mm²)', v('kesit'), 'Çekme Cihazı Kodu', v('cihaz')]]
+    .map(a => `<tr><td class="l">${a[0]}</td><td>${a[1]}</td><td class="l">${a[2]}</td><td>${a[3]}</td></tr>`).join('');
+  const vis = VIS.map(([k, t], i) => `<tr><td class="c" style="width:7%">${i + 1}</td><td>${t}</td><td class="c ${cls(vs[k])}" style="width:16%">${lbl(vs[k])}</td></tr>`).join('');
+  const tol = { kb: '± 15 mm', sy: '± 1 mm', kh: 'OK ≤ ±0,04 · İKAZ ±0,05 · NOK ≥ ±0,06' };
+  const num = NUM.map(([k, t, h, tl]) => {
+    const H = h ? n(k + 'H') : null, O = n(k + 'O'); let dv = '—', s = '';
+    if (H !== null && O !== null) { const dd = +(O - H).toFixed(3); dv = (dd > 0 ? '+' : '') + fm(dd); s = dur(k, dd, tl); }
+    return `<tr><td>${t}</td><td class="c">${H === null ? '—' : fm(H)}</td><td class="c">${O === null ? '—' : fm(O)}</td><td class="c">${dv}</td><td class="c" style="font-size:10.5px">${tol[k] || 'Kayıt'}</td><td class="c ${cls(s)}">${lbl(s)}</td></tr>`;
+  }).join('');
+  const cs = r.c.length && mn !== null ? (r.lo >= mn ? 'OK' : 'NOK') : '';
+  const gl = r.genel === 'IKAZ' ? 'İKAZ' : r.genel || 'DEĞERLENDİRİLMEDİ', col = { OK: '#1a7f37', NOK: '#c62828', IKAZ: '#b26a00' }[r.genel] || '#555';
+  const t = new Date(), p = x => String(x).padStart(2, '0');
+  $('rapor').innerHTML = `
+  <table><tr><td rowspan="2" class="c" style="width:18%;font-size:21px;font-weight:900;letter-spacing:1px">BURKAB<div style="font-size:9px;font-weight:600">A.Ş.</div></td>
+   <td rowspan="2" class="c" style="font-size:16px;font-weight:800;line-height:1.3">ULTRASONİK KAYNAK<br>PROSES KONTROL FORMU<div style="font-size:10px;font-weight:400">Ultrasonic Welding Process Control Report</div></td>
+   <td class="l" style="width:14%">Form No</td><td style="width:20%;font-weight:700">${esc($('fno').textContent)}</td></tr>
+   <tr><td class="l">Tarih / Saat</td><td>${d}.${mo}.${y} ${esc($('saat').value)}</td></tr></table>
+  <h3>GENEL BİLGİLER</h3><table>${inf}</table>
+  <h3>GÖRSEL KONTROL</h3><table><tr><th>No</th><th>Kontrol</th><th>Sonuç</th></tr>${vis}</table>
+  <h3>ÖLÇÜSEL KONTROL</h3><table><tr><th>Parametre</th><th>Hedef</th><th>Ölçülen</th><th>Sapma</th><th>Tolerans</th><th>Durum</th></tr>${num}</table>
+  <h3>ÇEKME (KOPMA) KUVVETİ TESTİ</h3><table><tr><th>Numune değerleri (N)</th><th>Min.</th><th>Max.</th><th>Min. kabul</th><th>Kopma yeri</th><th>Durum</th></tr>
+   <tr><td>${esc(r.c.map(fm).join(' · ')) || '—'}</td><td class="c">${r.lo === null ? '—' : fm(r.lo)}</td><td class="c">${r.hi === null ? '—' : fm(r.hi)}</td>
+   <td class="c">${mn === null ? '—' : fm(mn)}</td><td class="c">${v('kopma')}</td><td class="c ${cls(cs)}">${lbl(cs)}</td></tr></table>
+  <h3>AÇIKLAMA</h3><div class="box">${esc($('acik').value.trim())}</div>
+  <div class="sonuc" style="color:${col};border-color:${col}">GENEL SONUÇ: ${gl}</div>
+  ${r.genel === 'NOK' ? '<div class="box" style="min-height:0;border-color:#c62828;font-size:11px"><b>UYGUNSUZLUK:</b> Makine durdurulur, son uygun kontrolden sonraki ürünler ayrılır, AŞ-15 Uygun Olmayan Ürün Akış Şeması uygulanır.</div>' : ''}
+  <table class="imza"><tr><td>Operatör<br>Ad Soyad / İmza / Tarih</td><td>Proses Kontrol / Vardiya Sorumlusu<br>Ad Soyad / İmza / Tarih</td><td>Kalite Onayı<br>Ad Soyad / İmza / Tarih</td></tr></table>
+  <div class="ft">BURKAB Bakım Sistemi · Ultrasonik Kaynak Modülü · Baskı: ${p(t.getDate())}.${p(t.getMonth() + 1)}.${t.getFullYear()} ${p(t.getHours())}:${p(t.getMinutes())}</div>`;
+}
+addEventListener('beforeprint', rapor);
+simdi(); fno(); calc(); liste(); addEventListener('online', syncAll);
+</script></body></html>
